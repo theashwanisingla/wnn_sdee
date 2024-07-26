@@ -22,7 +22,7 @@ data_max = pd.read_csv("maxwell.csv")
 data_max.head()  # Display the first few rows of the dataset
 
 # Drop unnecessary columns and convert data to float
-df = data_max.drop(columns=['id'])
+df = data_max.drop(columns=["id"])
 df_for_training = df.astype(float)
 
 # Scale the features to the range (0, 1) for better model performance
@@ -30,17 +30,24 @@ scaler = MinMaxScaler(feature_range=(0, 1))
 scaler = scaler.fit(df_for_training)
 df_for_training_scaled = scaler.transform(df_for_training)
 
+
 def load_maxwell_data():
     """
     Load and return features (X) and target (y) from the preprocessed dataset.
     """
-    X = df_for_training.iloc[:, :-1].values  # Features (all columns except the last one)
-    y = df_for_training.iloc[:, -1].values   # Effort (last column)
+    X = df_for_training.iloc[
+        :, :-1
+    ].values  # Features (all columns except the last one)
+    y = df_for_training.iloc[:, -1].values  # Effort (last column)
     return X, y
+
 
 # Load data and split into training and testing sets
 totalX, totalY = load_maxwell_data()
-X_train, X_test, y_train, y_test = train_test_split(totalX, totalY, test_size=0.25, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    totalX, totalY, test_size=0.25, random_state=42
+)
+
 
 # Define the Morlet wavelet function as a custom layer
 class MorletWavelet(Layer):
@@ -50,6 +57,7 @@ class MorletWavelet(Layer):
     def call(self, inputs):
         sigma = 1.0  # Scale parameter for the wavelet
         return K.exp(-0.5 * K.square(inputs / sigma)) * K.cos(5.0 * inputs)
+
 
 # Build the neural network model
 def create_morlet_nn(input_dim):
@@ -75,19 +83,24 @@ def create_morlet_nn(input_dim):
     model.add(Flatten())
 
     # Output layer with a linear activation function
-    model.add(Dense(1, activation='linear'))
+    model.add(Dense(1, activation="linear"))
     return model
+
 
 # Initialize and compile the model
 input_dim = X_train.shape[1:]  # Define input dimensions
 model = create_morlet_nn(input_dim)  # Create the model
-model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')  # Compile the model
+model.compile(
+    optimizer=Adam(learning_rate=0.001), loss="mean_squared_error"
+)  # Compile the model
 
 # Display the model summary
 model.summary()
 
 # Train the model without any output
-history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_split=0.1, verbose=0)
+history = model.fit(
+    X_train, y_train, epochs=100, batch_size=32, validation_split=0.1, verbose=0
+)
 
 # Plot the training and validation loss
 # plt.plot(history.history['loss'], label='train_loss')

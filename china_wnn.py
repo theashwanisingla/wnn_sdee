@@ -16,6 +16,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras import backend as K
 
+
 # Data Preprocessing
 def data_china():
     """
@@ -23,10 +24,10 @@ def data_china():
     """
 
     # Load the dataset from a CSV file specified in CFG[1]
-    df = pd.read_csv('china.csv')
+    df = pd.read_csv("china.csv")
 
     # Drop the 'id' and 'ID' columns as they are not useful for training
-    df = df.drop(columns=['id', 'ID'])
+    df = df.drop(columns=["id", "ID"])
 
     # Convert all data to float type
     df_for_training = df.astype(float)
@@ -40,21 +41,31 @@ def data_china():
     trainX = []
     trainY = []
     n_future = 2  # Number of samples we want to look into the future
-    n_past = 2    # Number of past samples we want to use to predict the future
+    n_past = 2  # Number of past samples we want to use to predict the future
 
     # Generate the input and output sequences for the model
     for i in range(n_past, len(df_for_training_scaled) - n_future + 1):
-        trainX.append(df_for_training_scaled[i - n_past:i, 0:df_for_training.shape[1]])
-        trainY.append(df_for_training_scaled[i + n_future - 1:i + n_future, df_for_training.shape[1] - 1])
+        trainX.append(
+            df_for_training_scaled[i - n_past : i, 0 : df_for_training.shape[1]]
+        )
+        trainY.append(
+            df_for_training_scaled[
+                i + n_future - 1 : i + n_future, df_for_training.shape[1] - 1
+            ]
+        )
 
     # Convert lists to numpy arrays
     trainX, trainY = np.array(trainX), np.array(trainY)
 
     return trainX, trainY
 
+
 # Load and split the data into training and testing sets
 totalX, totalY = data_china()
-X_train, X_test, y_train, y_test = train_test_split(totalX, totalY, test_size=0.25, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    totalX, totalY, test_size=0.25, random_state=42
+)
+
 
 # Define the Morlet wavelet function as a custom layer
 class MorletWavelet(Layer):
@@ -64,6 +75,7 @@ class MorletWavelet(Layer):
     def call(self, inputs):
         sigma = 1.0  # Scale parameter
         return K.exp(-0.5 * K.square(inputs / sigma)) * K.cos(5.0 * inputs)
+
 
 # Build the neural network model
 def create_morlet_nn(input_dim):
@@ -89,13 +101,16 @@ def create_morlet_nn(input_dim):
     model.add(Flatten())
 
     # Output layer with a linear activation function
-    model.add(Dense(1, activation='linear'))
+    model.add(Dense(1, activation="linear"))
     return model
+
 
 # Initialize and compile the model
 input_dim = X_train.shape[1:]  # Define input dimensions
 model = create_morlet_nn(input_dim)  # Create the model
-model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')  # Compile the model
+model.compile(
+    optimizer=Adam(learning_rate=0.001), loss="mean_squared_error"
+)  # Compile the model
 
 # Display the model summary
 model.summary()
@@ -104,12 +119,12 @@ model.summary()
 history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_split=0.1)
 
 # Plot the training and validation loss
-plt.plot(history.history['loss'], label='train_loss')
-plt.plot(history.history['val_loss'], label='val_loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
+plt.plot(history.history["loss"], label="train_loss")
+plt.plot(history.history["val_loss"], label="val_loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
 plt.legend()
-plt.title('Training and Validation Loss')
+plt.title("Training and Validation Loss")
 plt.show()
 
 # Make predictions on the test set
